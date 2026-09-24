@@ -1,0 +1,4 @@
+data/
+.env
+*.ipa
+**/__pycache__

@@ -1,0 +1,594 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Sideloop</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='bg' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%235ac8fa'/%3E%3Cstop offset='.55' stop-color='%23007aff'/%3E%3Cstop offset='1' stop-color='%235856d6'/%3E%3C/linearGradient%3E%3ClinearGradient id='gloss' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23fff' stop-opacity='.22'/%3E%3Cstop offset='.5' stop-color='%23fff' stop-opacity='0'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='115' fill='url%28%23bg%29'/%3E%3Crect width='512' height='512' rx='115' fill='url%28%23gloss%29'/%3E%3Cg fill='none' stroke='%23fff' stroke-width='30' stroke-linecap='round'%3E%3Cpath d='M370.3 190A132 132 0 0 0 128 225'/%3E%3Cpath d='M141.7 322A132 132 0 0 0 384 287'/%3E%3C/g%3E%3Cg fill='%23fff' stroke='%23fff' stroke-width='10' stroke-linejoin='round'%3E%3Cpath d='M121 266L99 216L156 226Z'/%3E%3Cpath d='M391 246L413 296L356 286Z'/%3E%3C/g%3E%3Crect x='211' y='176' width='90' height='160' rx='22' fill='%23fff'/%3E%3Crect x='238' y='190' width='36' height='8' rx='4' fill='%23007aff' opacity='.55'/%3E%3Cpath d='M232 262l17 17 32-36' fill='none' stroke='%23007aff' stroke-width='16' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#f2f2f7; --cell:#ffffff; --elev:#ffffff;
+  --label:#000000; --label-2:rgba(60,60,67,.6); --label-3:rgba(60,60,67,.3);
+  --sep:rgba(60,60,67,.29); --fill:rgba(120,120,128,.2); --fill-3:rgba(118,118,128,.12);
+  --blue:#007aff; --green:#34c759; --orange:#ff9500; --red:#ff3b30; --gray:#8e8e93;
+  --bar:rgba(249,249,249,.8); --scrim:rgba(0,0,0,.4);
+  --mono:ui-monospace,"SF Mono",Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#000000; --cell:#1c1c1e; --elev:#2c2c2e;
+  --label:#ffffff; --label-2:rgba(235,235,245,.6); --label-3:rgba(235,235,245,.3);
+  --sep:rgba(84,84,88,.6); --fill:rgba(120,120,128,.36); --fill-3:rgba(118,118,128,.24);
+  --blue:#0a84ff; --green:#30d158; --orange:#ff9f0a; --red:#ff453a;
+  --bar:rgba(22,22,24,.8); --scrim:rgba(0,0,0,.6);
+}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0}
+body{background:var(--bg);color:var(--label);font:17px/1.29 -apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",system-ui,sans-serif;letter-spacing:-.022em;-webkit-font-smoothing:antialiased;min-height:100vh}
+button,input,select{font:inherit;color:inherit;letter-spacing:inherit}
+.page{max-width:680px;margin:0 auto;padding:0 20px calc(100px + env(safe-area-inset-bottom))}
+.hidden{display:none!important}
+svg.i{flex:none;display:block}
+
+.navbar{position:sticky;top:0;z-index:10;height:calc(44px + env(safe-area-inset-top));padding-top:env(safe-area-inset-top);display:flex;align-items:center;justify-content:center;transition:background .2s}
+.navbar.scrolled{background:var(--bar);backdrop-filter:saturate(1.8) blur(20px);-webkit-backdrop-filter:saturate(1.8) blur(20px);box-shadow:0 .5px 0 var(--sep)}
+.navbar .t{font-weight:600;opacity:0;transition:opacity .2s}
+.navbar.scrolled .t{opacity:1}
+.navbar .r{position:absolute;top:env(safe-area-inset-top);height:44px;display:flex;align-items:center;right:max(12px,calc(50% - 330px))}
+.navbtn{border:0;background:none;color:var(--blue);font-size:17px;cursor:pointer;padding:8px}
+.large{font-size:34px;font-weight:700;letter-spacing:.012em;line-height:41px;margin:2px 0 16px}
+
+.sect{margin:0 0 32px}
+.shead{display:flex;align-items:baseline;justify-content:space-between;margin:0 16px 7px}
+.shead h3{font-size:13px;font-weight:400;text-transform:uppercase;color:var(--label-2);margin:0;letter-spacing:-.005em}
+.foot{font-size:13px;color:var(--label-2);margin:7px 16px 0;line-height:1.38;letter-spacing:-.005em}
+.list{background:var(--cell);border-radius:10px;overflow:hidden}
+.cell{position:relative;display:flex;align-items:center;gap:12px;min-height:44px;padding:10px 16px;width:100%;border:0;background:none;text-align:left}
+.list>*+*::before{content:"";position:absolute;top:0;right:0;left:16px;height:.5px;background:var(--sep)}
+.list>.ind+*::before,.list>*+.ind::before{left:58px}
+.list>.approw+*::before{left:84px}
+.cell .k{flex:1;min-width:0}
+.cell .v{color:var(--label-2);text-align:right}
+.cell .sub{display:block;font-size:13px;color:var(--label-2);margin-top:1px;letter-spacing:-.005em}
+button.cell{cursor:pointer}
+button.cell:active:not(:disabled){background:var(--fill-3)}
+.cell.action{color:var(--blue)}
+.cell.center{justify-content:center}
+.cell:disabled{opacity:.4;cursor:default}
+.ico{width:30px;height:30px;border-radius:7px;display:grid;place-items:center;flex:none;color:#fff}
+.chev{color:var(--label-3)}
+.linkbtn{border:0;background:none;color:var(--blue);font-size:15px;cursor:pointer;padding:0;display:inline-flex;align-items:center;gap:4px}
+.linkbtn:disabled{opacity:.4;cursor:default}
+.iconbtn{border:0;background:none;color:var(--red);cursor:pointer;padding:6px;margin:-6px;border-radius:8px;display:grid;place-items:center}
+.iconbtn.armed{background:var(--red);color:#fff;padding:6px 10px;font-size:13px;font-weight:600;margin:-6px -6px -6px 0}
+
+.appicon{flex:none;display:grid;place-items:center;color:#fff;font-weight:700;letter-spacing:0;box-shadow:inset 0 0 0 .5px rgba(0,0,0,.1)}
+.appicon.md{width:56px;height:56px;border-radius:12.6px;font-size:25px}
+.appicon.xs{width:30px;height:30px;border-radius:7px;font-size:15px}
+.approw{position:relative;display:flex;gap:12px;align-items:center;padding:12px 16px}
+.approw .mid{flex:1;min-width:0}
+.approw .nm{font-size:17px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.approw .st{font-size:15px;color:var(--label-2);margin-top:1px}
+.st.warn{color:var(--orange)} .st.bad{color:var(--red)}
+.meter{position:relative;height:4px;border-radius:2px;background:var(--fill);margin-top:8px;max-width:300px}
+.meter>i{position:absolute;inset:0 auto 0 0;border-radius:2px;background:var(--green)}
+.meter.warn>i{background:var(--orange)} .meter.bad>i{background:var(--red)}
+.cap{border:0;border-radius:999px;padding:6px 16px;font-size:15px;font-weight:700;letter-spacing:-.01em;cursor:pointer;white-space:nowrap;background:var(--fill-3);color:var(--blue);flex:none;display:inline-flex;align-items:center;gap:6px}
+.cap.solid{background:var(--blue);color:#fff}
+.cap:disabled{opacity:.4;cursor:default}
+.cap:active:not(:disabled){opacity:.7}
+
+.badge{display:inline-flex;align-items:center;gap:6px;font-size:15px;color:var(--label-2);white-space:nowrap}
+.badge::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--gray)}
+.badge.ok::before{background:var(--green)} .badge.warn::before{background:var(--orange)} .badge.bad::before{background:var(--red)}
+
+.banner{display:flex;gap:12px;align-items:flex-start;background:var(--cell);border-radius:10px;padding:12px 16px;margin:0 0 24px;font-size:15px;line-height:1.35}
+.banner+.banner{margin-top:-14px}
+.banner svg{color:var(--orange)} .banner.bad svg{color:var(--red)}
+
+.switch{position:relative;width:51px;height:31px;flex:none;display:inline-block}
+.switch input{position:absolute;opacity:0;width:100%;height:100%;margin:0;cursor:pointer;z-index:1}
+.switch span{position:absolute;inset:0;border-radius:16px;background:var(--fill);transition:background .25s}
+.switch span::before{content:"";position:absolute;width:27px;height:27px;left:2px;top:2px;border-radius:50%;background:#fff;box-shadow:0 3px 8px rgba(0,0,0,.15),0 3px 1px rgba(0,0,0,.06);transition:transform .25s cubic-bezier(.3,.7,.4,1)}
+.switch input:checked+span{background:var(--green)}
+.switch input:checked+span::before{transform:translateX(20px)}
+
+.cell input.fi,.cell select.fi{flex:1.4;min-width:0;border:0;background:none;text-align:right;color:var(--label-2);padding:0;outline:none;font-size:17px}
+.cell input.fi:focus{color:var(--label)}
+.cell input.fi::placeholder{color:var(--label-3)}
+.cell select.fi{appearance:none;-webkit-appearance:none;cursor:pointer;text-align-last:right}
+.cell label{flex:none}
+
+.drop{position:relative;display:flex;align-items:center;gap:12px;padding:10px 16px;min-height:44px;cursor:pointer;color:var(--blue)}
+.drop.over{background:var(--fill-3)}
+.drop .k{flex:1}
+.progress{height:4px;border-radius:2px;background:var(--fill);overflow:hidden;margin:0 16px 12px}
+.progress i{display:block;height:100%;background:var(--blue);width:0;transition:width .2s}
+.warnrow{color:var(--label);font-size:15px;line-height:1.35}
+.warnrow svg{color:var(--orange);align-self:flex-start;margin-top:1px}
+.warnrow.bad svg{color:var(--red)}
+
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:10;background:var(--bar);backdrop-filter:saturate(1.8) blur(20px);-webkit-backdrop-filter:saturate(1.8) blur(20px);box-shadow:0 -.5px 0 var(--sep);padding-bottom:env(safe-area-inset-bottom)}
+.tabbar .in{max-width:480px;margin:0 auto;display:flex;height:50px}
+.tabbar button{flex:1;border:0;background:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:10px;font-weight:500;letter-spacing:.01em;color:var(--gray);cursor:pointer;padding-top:3px}
+.tabbar button[aria-current=true]{color:var(--blue)}
+
+.scrim{position:fixed;inset:0;background:var(--scrim);z-index:20;display:flex;align-items:flex-end;justify-content:center;animation:fade .25s}
+@media (min-width:700px){.scrim{align-items:center}}
+.sheet{background:var(--bg);width:min(560px,100%);max-height:88vh;border-radius:13px 13px 0 0;display:flex;flex-direction:column;animation:up .35s cubic-bezier(.2,.8,.2,1);padding-bottom:env(safe-area-inset-bottom)}
+@media (min-width:700px){.sheet{border-radius:13px;box-shadow:0 20px 60px rgba(0,0,0,.3)}}
+.grabber{width:36px;height:5px;border-radius:3px;background:var(--label-3);margin:6px auto 0}
+.sheet .bar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;height:52px;padding:0 8px}
+.sheet .bar .t{font-weight:600;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sheet .bar .r{justify-self:end} .navbtn.b{font-weight:600}
+.sheet .body{overflow:auto;padding:4px 20px 20px}
+.state{display:flex;flex-direction:column;align-items:center;text-align:center;padding:8px 0 22px;gap:10px}
+.state .glyph{width:56px;height:56px;border-radius:50%;display:grid;place-items:center;color:#fff}
+.state .glyph.ok{background:var(--green)} .state .glyph.bad{background:var(--red)}
+.state .ttl{font-size:20px;font-weight:600}
+.state .msg{font-size:15px;color:var(--label-2);max-width:420px}
+.term{margin:12px 0 0;padding:12px 14px;background:var(--cell);border-radius:10px;max-height:260px;overflow:auto;font-family:var(--mono);font-size:12px;line-height:1.5;white-space:pre-wrap;word-break:break-word;letter-spacing:0;color:var(--label-2)}
+.otp{display:flex;flex-direction:column;align-items:center;gap:14px;padding:6px 0 22px;text-align:center}
+.otp h2{font-size:22px;font-weight:700;margin:0;letter-spacing:.017em}
+.otp p{margin:0;color:var(--label-2);font-size:15px;max-width:340px}
+.code{font-family:var(--mono);font-size:30px;letter-spacing:.45em;text-align:center;width:10.5ch;padding:10px 0 10px .45em;border-radius:12px;border:0;background:var(--cell);outline:none}
+.code:focus{box-shadow:0 0 0 3px color-mix(in srgb,var(--blue) 45%,transparent)}
+.btn{border:0;border-radius:12px;padding:14px 20px;font-size:17px;font-weight:600;cursor:pointer;background:var(--blue);color:#fff;width:100%}
+.btn:active{opacity:.7}
+.spinner{flex:none;animation:s 1s steps(8) infinite}
+@keyframes s{to{transform:rotate(360deg)}}
+@keyframes up{from{transform:translateY(40px);opacity:0}}
+@keyframes fade{from{opacity:0}}
+
+.prog{padding:4px 0 18px}
+.sentence{font-size:20px;font-weight:600;text-align:center;margin:6px 0 16px}
+.pbar{height:6px;border-radius:3px;background:var(--fill);overflow:hidden}
+.pbar i{display:block;height:100%;border-radius:3px;background:var(--blue);transition:width .6s ease}
+.pct{font-size:13px;color:var(--label-2);text-align:right;margin:6px 2px 18px;font-variant-numeric:tabular-nums}
+.steps .cell{color:var(--label-3)}
+.steps .cell.now{color:var(--label)} .steps .cell.now svg{color:var(--label-2)}
+.steps .cell.done{color:var(--label)} .steps .cell.done svg{color:var(--green)}
+.steps .dot{width:22px;height:22px;display:grid;place-items:center;flex:none}
+.steps .dot::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--label-3)}
+.list+.list{margin-top:14px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
+.chip{border:0;border-radius:999px;padding:4px 10px;font-size:13px;font-weight:500;cursor:pointer;background:var(--fill-3);color:var(--label-2);display:inline-flex;align-items:center;gap:4px;letter-spacing:-.005em}
+.chip.on{background:color-mix(in srgb,var(--blue) 16%,transparent);color:var(--blue)}
+.appcell{align-items:flex-start}
+.toast{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top));transform:translateX(-50%);z-index:40;background:var(--elev);color:var(--label);padding:12px 20px;border-radius:999px;font-size:15px;font-weight:600;box-shadow:0 8px 30px rgba(0,0,0,.18),0 0 0 .5px var(--sep);animation:drop .35s cubic-bezier(.2,.8,.2,1);max-width:calc(100% - 32px);text-align:center}
+@keyframes drop{from{transform:translate(-50%,-30px);opacity:0}}
+
+.auth{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px 20px}
+.auth .box{width:min(380px,100%);text-align:center}
+.auth .logo{display:block;width:88px;height:88px;margin:0 auto 18px}
+.auth h1{font-size:28px;font-weight:700;margin:0 0 6px;letter-spacing:.013em}
+.auth p{color:var(--label-2);margin:0 0 24px;font-size:15px}
+.auth .list{text-align:left}
+.auth .err{color:var(--red);font-size:13px;margin:8px 16px 0;text-align:left}
+.auth .btn{margin-top:18px}
+
+.logs{margin:0;padding:14px 16px;font-family:var(--mono);font-size:12px;line-height:1.6;white-space:pre-wrap;word-break:break-word;max-height:calc(100vh - 230px);overflow:auto;letter-spacing:0;color:var(--label-2)}
+.empty{text-align:center;padding:36px 20px;color:var(--label-2);font-size:15px}
+.empty b{display:block;font-size:20px;color:var(--label);margin:14px 0 6px}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+"use strict";
+const ICONS = {"add-circle":"<path d=\"M256 48C141.31 48 48 141.31 48 256s93.31 208 208 208 208-93.31 208-208S370.69 48 256 48m80 224h-64v64a16 16 0 0 1-32 0v-64h-64a16 16 0 0 1 0-32h64v-64a16 16 0 0 1 32 0v64h64a16 16 0 0 1 0 32\"/>","alert-circle":"<path d=\"M256 48C141.31 48 48 141.31 48 256s93.31 208 208 208 208-93.31 208-208S370.69 48 256 48m0 319.91a20 20 0 1 1 20-20 20 20 0 0 1-20 20m21.72-201.15-5.74 122a16 16 0 0 1-32 0l-5.74-121.94v-.05a21.74 21.74 0 1 1 43.44 0Z\"/>","apps":"<path d=\"M104 160a56 56 0 1 1 56-56 56.06 56.06 0 0 1-56 56M256 160a56 56 0 1 1 56-56 56.06 56.06 0 0 1-56 56M408 160a56 56 0 1 1 56-56 56.06 56.06 0 0 1-56 56M104 312a56 56 0 1 1 56-56 56.06 56.06 0 0 1-56 56M256 312a56 56 0 1 1 56-56 56.06 56.06 0 0 1-56 56M408 312a56 56 0 1 1 56-56 56.06 56.06 0 0 1-56 56M104 464a56 56 0 1 1 56-56 56.06 56.06 0 0 1-56 56M256 464a56 56 0 1 1 56-56 56.06 56.06 0 0 1-56 56M408 464a56 56 0 1 1 56-56 56.06 56.06 0 0 1-56 56\"/>","apps-outline":"<rect width=\"80\" height=\"80\" x=\"64\" y=\"64\" rx=\"40\" ry=\"40\" fill=\"none\" stroke=\"currentColor\" stroke-miterlimit=\"10\" stroke-width=\"36\"/><rect width=\"80\" height=\"80\" x=\"216\" y=\"64\" rx=\"40\" ry=\"40\" fill=\"none\" stroke=\"currentColor\" stroke-miterlimit=\"10\" stroke-width=\"36\"/><rect width=\"80\" height=\"80\" x=\"368\" y=\"64\" rx=\"40\" ry=\"40\" fill=\"none\" stroke=\"currentColor\" stroke-miterlimit=\"10\" stroke-width=\"36\"/><rect width=\"80\" height=\"80\" x=\"64\" y=\"216\" rx=\"40\" ry=\"40\" fill=\"none\" stroke=\"currentColor\" stroke-miterlimit=\"10\" stroke-width=\"36\"/><rect width=\"80\" height=\"80\" x=\"216\" y=\"216\" rx=\"40\" ry=\"40\" fill=\"none\" stroke=\"currentColor\" stroke-miterlimit=\"10\" stroke-width=\"36\"/><rect width=\"80\" height=\"80\" x=\"368\" y=\"216\" rx=\"40\" ry=\"40\" fill=\"none\" stroke=\"currentColor\" stroke-miterlimit=\"10\" stroke-width=\"36\"/><rect width=\"80\" height=\"80\" x=\"64\" y=\"368\" rx=\"40\" ry=\"40\" fill=\"none\" stroke=\"currentColor\" stroke-miterlimit=\"10\" stroke-width=\"36\"/><rect width=\"80\" height=\"80\" x=\"216\" y=\"368\" rx=\"40\" ry=\"40\" fill=\"none\" stroke=\"currentColor\" stroke-miterlimit=\"10\" stroke-width=\"36\"/><rect width=\"80\" height=\"80\" x=\"368\" y=\"368\" rx=\"40\" ry=\"40\" fill=\"none\" stroke=\"currentColor\" stroke-miterlimit=\"10\" stroke-width=\"36\"/>","checkmark":"<path d=\"M416 128 192 384l-96-96\" fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"36\"/>","checkmark-circle":"<path d=\"M256 48C141.31 48 48 141.31 48 256s93.31 208 208 208 208-93.31 208-208S370.69 48 256 48m108.25 138.29-134.4 160a16 16 0 0 1-12 5.71h-.27a16 16 0 0 1-11.89-5.3l-57.6-64a16 16 0 1 1 23.78-21.4l45.29 50.32 122.59-145.91a16 16 0 0 1 24.5 20.58\"/>","chevron-forward":"<path d=\"m184 112 144 144-144 144\" fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"48\"/>","close":"<path d=\"m289.94 256 95-95A24 24 0 0 0 351 127l-95 95-95-95a24 24 0 0 0-34 34l95 95-95 95a24 24 0 1 0 34 34l95-95 95 95a24 24 0 0 0 34-34Z\"/>","flash":"<path d=\"M194.82 496a18.36 18.36 0 0 1-18.1-21.53v-.11L204.83 320H96a16 16 0 0 1-12.44-26.06L302.73 23a18.45 18.45 0 0 1 32.8 13.71c0 .3-.08.59-.13.89L307.19 192H416a16 16 0 0 1 12.44 26.06L209.24 489a18.45 18.45 0 0 1-14.42 7\"/>","list":"<path d=\"M160 144h288M160 256h288M160 368h288\" fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"48\"/><circle cx=\"80\" cy=\"144\" r=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"36\"/><circle cx=\"80\" cy=\"256\" r=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"36\"/><circle cx=\"80\" cy=\"368\" r=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"36\"/>","list-outline":"<path d=\"M160 144h288M160 256h288M160 368h288\" fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"36\"/><circle cx=\"80\" cy=\"144\" r=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"36\"/><circle cx=\"80\" cy=\"256\" r=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"36\"/><circle cx=\"80\" cy=\"368\" r=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"36\"/>","lock-closed":"<path d=\"M368 192h-16v-80a96 96 0 1 0-192 0v80h-16a64.07 64.07 0 0 0-64 64v176a64.07 64.07 0 0 0 64 64h224a64.07 64.07 0 0 0 64-64V256a64.07 64.07 0 0 0-64-64m-48 0H192v-80a64 64 0 1 1 128 0Z\"/>","phone-portrait":"<path d=\"M336 0H176a64 64 0 0 0-64 64v384a64 64 0 0 0 64 64h160a64 64 0 0 0 64-64V64a64 64 0 0 0-64-64m32 448a32 32 0 0 1-32 32H176a32 32 0 0 1-32-32V64a32 32 0 0 1 32-32h11.35a7.94 7.94 0 0 1 7.3 4.75A32 32 0 0 0 224 56h64a32 32 0 0 0 29.35-19.25 7.94 7.94 0 0 1 7.3-4.75H336a32 32 0 0 1 32 32Z\"/><path d=\"M336 48a11.88 11.88 0 0 0-9.53 4.69A48 48 0 0 1 288 72h-64a48 48 0 0 1-38.47-19.31A11.88 11.88 0 0 0 176 48a16 16 0 0 0-16 16v384a16 16 0 0 0 16 16h160a16 16 0 0 0 16-16V64a16 16 0 0 0-16-16\"/><path d=\"M336 0H176a64 64 0 0 0-64 64v384a64 64 0 0 0 64 64h160a64 64 0 0 0 64-64V64a64 64 0 0 0-64-64m32 448a32 32 0 0 1-32 32H176a32 32 0 0 1-32-32V64a32 32 0 0 1 32-32h11.35a7.94 7.94 0 0 1 7.3 4.75A32 32 0 0 0 224 56h64a32 32 0 0 0 29.35-19.25 7.94 7.94 0 0 1 7.3-4.75H336a32 32 0 0 1 32 32Z\"/>","phone-portrait-outline":"<rect width=\"256\" height=\"480\" x=\"128\" y=\"16\" rx=\"48\" ry=\"48\" fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"36\"/><path d=\"M176 16h24a8 8 0 0 1 8 8h0a16 16 0 0 0 16 16h64a16 16 0 0 0 16-16h0a8 8 0 0 1 8-8h24\" fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"36\"/>","refresh":"<path d=\"M320 146s24.36-12-64-12a160 160 0 1 0 160 160\" fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-miterlimit=\"10\" stroke-width=\"36\"/><path d=\"m256 58 80 80-80 80\" fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"36\"/>","settings":"<circle cx=\"256\" cy=\"256\" r=\"48\"/><path d=\"m470.39 300-.47-.38-31.56-24.75a16.11 16.11 0 0 1-6.1-13.33v-11.56a16 16 0 0 1 6.11-13.22L469.92 212l.47-.38a26.68 26.68 0 0 0 5.9-34.06l-42.71-73.9a1.6 1.6 0 0 1-.13-.22A26.86 26.86 0 0 0 401 92.14l-.35.13-37.1 14.93a15.94 15.94 0 0 1-14.47-1.29q-4.92-3.1-10-5.86a15.94 15.94 0 0 1-8.19-11.82l-5.59-39.59-.12-.72A27.22 27.22 0 0 0 298.76 26h-85.52a26.92 26.92 0 0 0-26.45 22.39l-.09.56-5.57 39.67a16 16 0 0 1-8.13 11.82 175 175 0 0 0-10 5.82 15.92 15.92 0 0 1-14.43 1.27l-37.13-15-.35-.14a26.87 26.87 0 0 0-32.48 11.34l-.13.22-42.77 73.95a26.71 26.71 0 0 0 5.9 34.1l.47.38 31.56 24.75a16.11 16.11 0 0 1 6.1 13.33v11.56a16 16 0 0 1-6.11 13.22L42.08 300l-.47.38a26.68 26.68 0 0 0-5.9 34.06l42.71 73.9a1.6 1.6 0 0 1 .13.22 26.86 26.86 0 0 0 32.45 11.3l.35-.13 37.07-14.93a15.94 15.94 0 0 1 14.47 1.29q4.92 3.11 10 5.86a15.94 15.94 0 0 1 8.19 11.82l5.56 39.59.12.72A27.22 27.22 0 0 0 213.24 486h85.52a26.92 26.92 0 0 0 26.45-22.39l.09-.56 5.57-39.67a16 16 0 0 1 8.18-11.82c3.42-1.84 6.76-3.79 10-5.82a15.92 15.92 0 0 1 14.43-1.27l37.13 14.95.35.14a26.85 26.85 0 0 0 32.48-11.34 3 3 0 0 1 .13-.22l42.71-73.89a26.7 26.7 0 0 0-5.89-34.11m-134.48-40.24a80 80 0 1 1-83.66-83.67 80.21 80.21 0 0 1 83.66 83.67\"/>","settings-outline":"<path d=\"M262.29 192.31a64 64 0 1 0 57.4 57.4 64.13 64.13 0 0 0-57.4-57.4M416.39 256a154 154 0 0 1-1.53 20.79l45.21 35.46a10.81 10.81 0 0 1 2.45 13.75l-42.77 74a10.81 10.81 0 0 1-13.14 4.59l-44.9-18.08a16.11 16.11 0 0 0-15.17 1.75A164.5 164.5 0 0 1 325 400.8a15.94 15.94 0 0 0-8.82 12.14l-6.73 47.89a11.08 11.08 0 0 1-10.68 9.17h-85.54a11.11 11.11 0 0 1-10.69-8.87l-6.72-47.82a16.07 16.07 0 0 0-9-12.22 155 155 0 0 1-21.46-12.57 16 16 0 0 0-15.11-1.71l-44.89 18.07a10.81 10.81 0 0 1-13.14-4.58l-42.77-74a10.8 10.8 0 0 1 2.45-13.75l38.21-30a16.05 16.05 0 0 0 6-14.08c-.36-4.17-.58-8.33-.58-12.5s.21-8.27.58-12.35a16 16 0 0 0-6.07-13.94l-38.19-30A10.81 10.81 0 0 1 49.48 186l42.77-74a10.81 10.81 0 0 1 13.14-4.59l44.9 18.08a16.11 16.11 0 0 0 15.17-1.75A164.5 164.5 0 0 1 187 111.2a15.94 15.94 0 0 0 8.82-12.14l6.73-47.89A11.08 11.08 0 0 1 213.23 42h85.54a11.11 11.11 0 0 1 10.69 8.87l6.72 47.82a16.07 16.07 0 0 0 9 12.22 155 155 0 0 1 21.46 12.57 16 16 0 0 0 15.11 1.71l44.89-18.07a10.81 10.81 0 0 1 13.14 4.58l42.77 74a10.8 10.8 0 0 1-2.45 13.75l-38.21 30a16.05 16.05 0 0 0-6.05 14.08c.33 4.14.55 8.3.55 12.47\" fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"36\"/>","sync":"<path d=\"M434.67 285.59v-29.8c0-98.73-80.24-178.79-179.2-178.79a179 179 0 0 0-140.14 67.36m-38.53 82v29.8C76.8 355 157 435 256 435a180.45 180.45 0 0 0 140-66.92\" fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"36\"/><path d=\"m32 256 44-44 46 44M480 256l-44 44-46-44\" fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"36\"/>","tablet-portrait":"<path d=\"M384 512H128a64.07 64.07 0 0 1-64-64V64a64.07 64.07 0 0 1 64-64h256a64.07 64.07 0 0 1 64 64v384a64.07 64.07 0 0 1-64 64M128 32a32 32 0 0 0-32 32v384a32 32 0 0 0 32 32h256a32 32 0 0 0 32-32V64a32 32 0 0 0-32-32Z\"/><path d=\"M384 0a64.07 64.07 0 0 1 64 64v384a64.07 64.07 0 0 1-64 64H128a64.07 64.07 0 0 1-64-64V64a64.07 64.07 0 0 1 64-64zM128 480h256a32 32 0 0 0 32-32V64a32 32 0 0 0-32-32H128a32 32 0 0 0-32 32v384a32 32 0 0 0 32 32m0-16a16 16 0 0 1-16-16V64a16 16 0 0 1 16-16h256a16 16 0 0 1 16 16v384a16 16 0 0 1-16 16Z\"/>","time-outline":"<path d=\"M256 64C150 64 64 150 64 256s86 192 192 192 192-86 192-192S362 64 256 64Z\" fill=\"none\" stroke=\"currentColor\" stroke-miterlimit=\"10\" stroke-width=\"36\"/><path d=\"M256 128v144h96\" fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"36\"/>","trash-outline":"<path d=\"m112 112 20 320c.95 18.49 14.4 32 32 32h184c17.67 0 30.87-13.51 32-32l20-320\" fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"36\"/><path d=\"M80 112h352\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-miterlimit=\"10\" stroke-width=\"36\"/><path d=\"M192 112V72h0a23.93 23.93 0 0 1 24-24h80a23.93 23.93 0 0 1 24 24h0v40M256 176v224M184 176l8 224M328 176l-8 224\" fill=\"none\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"36\"/>","warning":"<path d=\"M449.07 399.08 278.64 82.58c-12.08-22.44-44.26-22.44-56.35 0L51.87 399.08A32 32 0 0 0 80 446.25h340.89a32 32 0 0 0 28.18-47.17m-198.6-1.83a20 20 0 1 1 20-20 20 20 0 0 1-20 20m21.72-201.15-5.74 122a16 16 0 0 1-32 0l-5.74-121.95a21.73 21.73 0 0 1 21.5-22.69h.21a21.74 21.74 0 0 1 21.73 22.7Z\"/>"};
+const ic = (name, size=20, cls="") => `<svg class="i ${cls}" viewBox="0 0 512 512" width="${size}" height="${size}" fill="currentColor" aria-hidden="true">${ICONS[name]}</svg>`;
+const spinner = (size=18) => `<svg class="spinner" viewBox="0 0 28 28" width="${size}" height="${size}" aria-label="Loading">${Array.from({length:8}, (_, i) =>
+  `<rect x="12.6" y="2" width="2.8" height="7" rx="1.4" fill="currentColor" opacity="${(0.15 + i*0.12).toFixed(2)}" transform="rotate(${i*45} 14 14)"/>`).join("")}</svg>`;
+
+const $ = (s, el=document) => el.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const root = $("#root");
+const VIEWS = ["apps", "settings", "activity"];
+let S = null, view = VIEWS.includes(location.hash.slice(1)) ? location.hash.slice(1) : "apps";
+let lastPage = "", pending = null, confirmRemove = null, jobSince = 0, jobLines = [], jobId = null, pollT = null, pollGen = 0, showLog = false;
+const watched = new Set();
+let dismissedJob = null;
+try { dismissedJob = localStorage.getItem("dismissedJob"); } catch {}
+function dismiss(id) { dismissedJob = id; try { localStorage.setItem("dismissedJob", id); } catch {} }
+const sheetJob = () => { const j = S && S.job; return j && j.id !== dismissedJob && (j.running || watched.has(j.id)) ? j : null; };
+
+async function api(path, opts={}) {
+  const o = {headers:{"X-Requested-With":"sideloop"}, ...opts};
+  if (o.json !== undefined) { o.method = o.method || "POST"; o.body = JSON.stringify(o.json); o.headers["Content-Type"] = "application/json"; delete o.json; }
+  const r = await fetch(path, o);
+  const data = await r.json().catch(() => ({}));
+  if (r.status === 401 && !path.startsWith("/api/auth")) { boot(); throw new Error("signed out"); }
+  if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
+  return data;
+}
+function toast(msg) {
+  document.querySelectorAll(".toast").forEach(t => t.remove());
+  const t = document.createElement("div"); t.className = "toast"; t.textContent = msg;
+  document.body.append(t); setTimeout(() => t.remove(), 2600);
+}
+function dur(s) {
+  s = Math.max(0, Math.floor(s));
+  if (s >= 86400) return `${Math.floor(s/86400)}d ${Math.floor(s%86400/3600)}h`;
+  if (s >= 3600) return `${Math.floor(s/3600)}h ${Math.floor(s%3600/60)}m`;
+  return `${Math.max(1, Math.floor(s/60))} min`;
+}
+const tile = (color, name) => `<span class="ico" style="background:${color}">${ic(name, 18)}</span>`;
+const sw = (id, on) => `<label class="switch"><input type="checkbox" role="switch" id="${id}" ${on ? "checked" : ""}><span></span></label>`;
+const HUES = ["#ff3b30","#ff9500","#34c759","#00c7be","#007aff","#5856d6","#af52de","#ff2d55"];
+const hue = s => HUES[[...String(s)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7) % HUES.length];
+const appIcon = (a, cls) => { const c = hue(a.bundle_id || a.name);
+  return `<div class="appicon ${cls}" style="background:linear-gradient(160deg,color-mix(in srgb,${c} 70%,#fff),${c} 55%,color-mix(in srgb,${c} 75%,#000))">${esc((a.name||"?")[0])}</div>`; };
+
+async function boot() {
+  clearTimeout(pollT);
+  const a = await api("/api/auth");
+  if (!a.has_password) return renderAuth(true);
+  if (!a.logged_in) return renderAuth(false);
+  await refresh();
+  if (!S.configured) view = "settings";
+  render(); poll();
+  if (view === "activity") loadLogs();
+}
+function renderAuth(first) {
+  root.innerHTML = `<div class="auth"><div class="box">
+    <img class="logo" src="${document.querySelector('link[rel=icon]').href}" alt="">
+    <h1>${first ? "Create a Password" : "Sideloop"}</h1>
+    <p>${first ? "This page holds your Apple ID, so it needs a password." : "Enter your password to continue."}</p>
+    <form id="authf">
+      <div class="list"><div class="cell"><input class="fi" style="text-align:left;color:var(--label)" id="pw" type="password" placeholder="${first ? "At least 8 characters" : "Password"}"
+        autocomplete="${first ? "new-password" : "current-password"}" required minlength="${first ? 8 : 1}" autofocus></div></div>
+      <div id="autherr" class="err hidden"></div>
+      <button class="btn">${first ? "Continue" : "Sign In"}</button></form></div></div>`;
+  $("#authf").onsubmit = async e => {
+    e.preventDefault();
+    try { await api(first ? "/api/auth/setup" : "/api/auth/login", {json:{password:$("#pw").value}}); boot(); }
+    catch (err) { const n = $("#autherr"); n.textContent = err.message; n.classList.remove("hidden"); }
+  };
+}
+
+async function refresh() { S = await api("/api/state"); }
+async function poll() {
+  const gen = ++pollGen;
+  clearTimeout(pollT);
+  try {
+    await refresh();
+    if (gen !== pollGen) return;
+    if (S.job && S.job.running) watched.add(S.job.id);
+    if (sheetJob()) await pullJob();
+    if (gen !== pollGen) return;
+    render();
+  } catch (e) { if (e.message === "signed out" || gen !== pollGen) return; }
+  const busy = S && ((S.job && S.job.running) || S.scanning || S.watcher.running);
+  pollT = setTimeout(poll, busy ? 1500 : 8000);
+}
+async function pullJob() {
+  if (S.job.id !== jobId) { jobId = S.job.id; jobSince = 0; jobLines = []; showLog = false; }
+  const r = await api(`/api/job?since=${jobSince}`);
+  if (!r.job || r.job.id !== jobId) return;
+  jobLines.push(...r.job.lines); jobSince = r.job.total; S.job = r.job;
+}
+
+const TITLES = {apps:"Apps", settings:"Settings", activity:"Activity"};
+const TABS = [["apps", "Apps", "apps"], ["settings", "Settings", "settings"], ["activity", "Activity", "list"]];
+function render() {
+  const keep = document.activeElement && document.activeElement.id;
+  const vals = {}; root.querySelectorAll("input[id]").forEach(i => { if (i.type !== "checkbox" && i.type !== "file") vals[i.id] = i.value; });
+  const logScroll = $("#logs") ? $("#logs").scrollTop : null;
+  const html = `
+  <div class="navbar${scrollY > 30 ? " scrolled" : ""}" id="navbar"><span class="t">${TITLES[view]}</span>
+    <div class="r"><button class="navbtn" id="signout">Sign Out</button></div></div>
+  <div class="page"><h1 class="large">${TITLES[view]}</h1>
+    ${view === "apps" ? appsView() : view === "settings" ? settingsView() : activityView()}</div>
+  <nav class="tabbar"><div class="in">${TABS.map(([k, l, icon]) =>
+    `<button data-view="${k}" aria-current="${view===k}">${ic(view === k ? icon : icon + "-outline", 26)}<span>${l}</span></button>`).join("")}</div></nav>`;
+  renderSheet();
+  if (html === lastPage) return;
+  lastPage = html;
+  root.innerHTML = html;
+  $("#signout").onclick = async () => { await api("/api/auth/logout", {json:{}}); boot(); };
+  Object.entries(vals).forEach(([id, v]) => { const i = document.getElementById(id); if (i) i.value = v; });
+  if (keep) { const el = document.getElementById(keep); if (el) el.focus(); }
+  wire();
+  if (logScroll !== null && $("#logs")) $("#logs").scrollTop = logScroll;
+}
+function go(v) { view = v; history.replaceState(null, "", "#" + v); scrollTo(0, 0); render(); if (v === "activity") loadLogs(); }
+addEventListener("scroll", () => { const n = $("#navbar"); if (n) n.classList.toggle("scrolled", scrollY > 30); }, {passive:true});
+
+function sig(t) {
+  const e = t.signature.expiry, left = e ? e - S.now : 0;
+  if (!e) return {cls:"idle", text:"Not installed yet", left};
+  if (left <= 0) return {cls:"bad", text:"Expired", left};
+  if (left <= S.config.renew_before_days * 86400) return {cls:"warn", text:`${dur(left)} left`, left};
+  return {cls:"ok", text:`${dur(left)} left`, left};
+}
+const devState = d => !d.live ? ["", "Away"] : d.live.reachable ? ["ok", "Connected"] : ["warn", "Locked"];
+const devIcon = d => /ipad/i.test((d.live && d.live.model) || d.name) ? "tablet-portrait" : "phone-portrait";
+
+function appsView() {
+  const apps = S.apps || [], devs = S.registered || [], c = S.config, auto = S.watcher.job;
+  const busy = (S.job && S.job.running) || S.watcher.running;
+  if (!S.configured) return `<div class="list"><div class="empty">${ic("phone-portrait-outline", 44)}<b>Not Set Up Yet</b>
+    Add a device, an app and your Apple ID.<div style="margin-top:18px"><button class="cap solid" data-go="settings">Open Settings</button></div></div></div>`;
+
+  const window = c.renew_before_days * 86400, life = c.lifetime_days * 86400;
+  const onDev = d => apps.map(a => ({a, t: a.targets.find(t => t.udid === d.udid)})).filter(x => x.t);
+  const issues = [];
+  if (!S.services.anisette || !S.services.muxer) issues.push(["bad", `${!S.services.anisette ? "The Apple sign-in helper" : "The device connection service"} isn't running.`]);
+  if (!c.auto_check) issues.push(["", "Automatic re-signing is off."]);
+  else for (const d of devs) {
+    const due = onDev(d).some(({t}) => !t.signature.expiry || t.signature.expiry - S.now <= window);
+    if (due && !(d.live && d.live.reachable)) issues.push(["", `Unlock ${d.name} on this Wi‑Fi: an app needs re-signing.`]);
+  }
+  const targets = devs.reduce((n, d) => n + onDev(d).length, 0);
+
+  const section = d => {
+    const [cls, label] = devState(d), rows = onDev(d);
+    return `<div class="sect">
+      <div class="shead"><h3>${esc(d.name)}</h3><span class="badge ${cls}" style="font-size:13px">${label}</span></div>
+      <div class="list">${rows.map(({a, t}) => {
+        const s = sig(t), lr = t.signature.last_run, failed = lr && lr.result === "fail";
+        const pct = t.signature.expiry ? Math.max(0, Math.min(100, s.left / life * 100)) : 0;
+        return `<div class="approw">${appIcon(a, "md")}
+          <div class="mid"><div class="nm">${esc(a.name)}</div>
+            <div class="st ${failed ? "bad" : s.cls}">${failed ? "Last re-sign failed" : s.text}</div>
+            ${t.signature.expiry ? `<div class="meter ${s.cls}"><i style="width:${pct}%"></i></div>` : ""}</div>
+          <button class="cap ${s.cls === "ok" ? "" : "solid"}" data-sign="${esc(a.id)}" data-dev="${esc(d.udid)}" ${busy ? "disabled" : ""}>${t.signature.expiry ? "Re-sign" : "Install"}</button></div>`;
+      }).join("") || `<div class="cell"><span class="k" style="color:var(--label-2)">No apps on this device</span><button class="linkbtn" data-go="settings">Choose</button></div>`}</div>
+    </div>`;
+  };
+
+  let autoCard = "";
+  if (S.watcher.running) {
+    const what = auto && auto.app ? esc(auto.app) : "your apps";
+    const sentence = auto && auto.stage ? {signin: `Signing in to install ${what}…`, sign: `Signing ${what}…`, send: `Copying ${what} to the device…`, install: `Installing ${what}…`}[auto.stage]
+                   : `Checking ${what}…`;
+    const p = auto && auto.stage ? Math.round(pct(auto) * 100) : null;
+    autoCard = `<div class="banner auto"><span style="color:var(--label-2)">${spinner(20)}</span><div style="flex:1;min-width:0">
+      <div>${sentence}</div>${p !== null ? `<div class="pbar" style="margin-top:8px"><i style="width:${p}%"></i></div>` : ""}
+      <div class="st" style="font-size:13px;color:var(--label-2);margin-top:4px">Automatic${p !== null ? ` · ${p}%` : ""}. Buttons are paused until it's done.</div></div></div>`;
+  }
+
+  return `${autoCard}${issues.map(([k, t]) => `<div class="banner ${k}">${ic(k === "bad" ? "alert-circle" : "warning", 20)}<div>${esc(t)}</div></div>`).join("")}
+  ${devs.map(section).join("")}
+  <div class="sect">
+    <div class="list">
+      ${targets > 1 ? `<button class="cell action" id="signall" ${busy ? "disabled" : ""}>${ic("sync", 22)}Re-sign Everything</button>` : ""}
+      <button class="cell action" id="recheck" ${busy ? "disabled" : ""}>${ic("refresh", 22)}Check Everything</button>
+      <button class="cell action" data-go="settings">${ic("add-circle", 22)}Add App or Device</button>
+    </div>
+  </div>
+  <div class="sect">
+    <div class="list"><div class="cell">${tile("var(--green)", "flash")}<span class="k">Re-sign Automatically</span>${sw("auto", c.auto_check)}</div></div>
+    <div class="foot">Checks each device when it connects and re-signs ${c.renew_before_days} day${c.renew_before_days > 1 ? "s" : ""} before an app expires.</div>
+  </div>`;
+}
+
+const STEPS = [["signin", "Sign in to Apple"], ["sign", "Sign app"], ["send", "Copy to device"], ["install", "Install"]];
+const SPAN = {signin: [0, .06], sign: [.06, .5], send: [.5, .95], install: [.95, 1]};
+const sheetHost = document.body.appendChild(Object.assign(document.createElement("div"), {id: "sheethost"}));
+let sheetFor = null;
+const patch = (el, html) => { if (el && el._h !== html) { el._h = html; el.innerHTML = html; } };
+const pct = j => { const [a, b] = SPAN[j.stage]; return a + (b - a) * (j.stage === "signin" ? 0 : j.fraction); };
+
+function renderSheet() {
+  const j = sheetJob();
+  if (!j) { if (sheetFor) { sheetHost.innerHTML = ""; sheetFor = null; } return; }
+  if (sheetFor !== j.id) {
+    sheetFor = j.id;
+    sheetHost.innerHTML = `<div class="scrim" id="scrim"><div class="sheet" role="dialog" aria-modal="true">
+      <div class="grabber"></div>
+      <div class="bar"><div id="sh-l"></div><div class="t" id="sh-t"></div><div class="r" id="sh-r"></div></div>
+      <div class="body"><div id="sh-main"></div>
+        <div class="list"><button class="cell action center" id="togglelog"></button></div>
+        <pre class="term hidden" id="joblog"></pre></div></div></div>`;
+  }
+  const lines = jobLines.concat(j.partial ? [j.partial] : []);
+  const last = lines.filter(l => l.trim()).slice(-1)[0] || "Starting…";
+  const asking = j.running && j.needs_input && j.accepts_input;
+  const who = j.app ? esc(j.app) : "the app";
+  patch($("#sh-t"), esc(j.title));
+  patch($("#sh-l"), j.running ? `<button class="navbtn" id="cancel">Cancel</button>` : "");
+  patch($("#sh-r"), j.running ? "" : `<button class="navbtn b" id="dismiss">Done</button>`);
+
+  let mode, main;
+  if (asking) { mode = "ask"; main = `<form class="otp" id="askf">
+      <div class="appicon md" style="background:linear-gradient(160deg,#8e8e93,#636366)">${ic("lock-closed", 26)}</div>
+      <h2>Verification Code</h2><p>Enter the code sent to your Apple devices.</p>
+      <input class="code" id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••••" autofocus>
+      <button class="btn" style="width:min(320px,100%)">Continue</button></form>`; }
+  else if (j.running && j.stage) {
+    mode = "progress";
+    const p = Math.round(pct(j) * 100), at = STEPS.findIndex(([k]) => k === j.stage);
+    const sentence = {signin: "Signing in to Apple…", sign: `Signing ${who}…`, send: "Copying to the device…", install: "Installing…"}[j.stage];
+    main = `<div class="prog"><div class="sentence">${sentence}</div>
+      <div class="pbar"><i style="width:${p}%"></i></div><div class="pct">${p}%</div>
+      <div class="list steps">${STEPS.map(([k, l], i) => `<div class="cell ${i < at ? "done" : i === at ? "now" : ""}">
+        ${i < at ? ic("checkmark-circle", 22) : i === at ? spinner(20) : `<span class="dot"></span>`}<span class="k">${l}</span></div>`).join("")}</div></div>`;
+  }
+  else if (j.running) { mode = "spin"; main = `<div class="state"><span style="color:var(--label-2)">${spinner(30)}</span><div class="msg">${esc(last)}</div></div>`; }
+  else if (j.rc === 0) { mode = "ok"; main = `<div class="state"><div class="glyph ok">${ic("checkmark", 32)}</div><div class="ttl">Done</div>${j.kind === "refresh" && j.app ? `<div class="msg">${who} is signed and installed.</div>` : ""}</div>`; }
+  else { mode = "fail"; main = `<div class="state"><div class="glyph bad">${ic("close", 32)}</div><div class="ttl">Didn't Work</div><div class="msg">${esc(last)}</div></div>`; }
+
+  const box = $("#sh-main");
+  if (mode === "progress" && box._mode === "progress") {
+    const p = Math.round(pct(j) * 100);
+    const tmp = document.createElement("div"); tmp.innerHTML = main;
+    box.querySelector(".pbar i").style.width = p + "%";
+    box.querySelector(".pct").textContent = p + "%";
+    box.querySelector(".sentence").textContent = tmp.querySelector(".sentence").textContent;
+    const cur = box.querySelector(".steps");
+    if (box._stage !== j.stage) cur.innerHTML = tmp.querySelector(".steps").innerHTML;
+  } else if (box._mode !== mode || mode === "spin" || mode === "fail") {
+    patch(box, main);
+    if (mode === "ask" && box._mode !== "ask") { const c = $("#code"); if (c) c.focus(); }
+  }
+  box._mode = mode; box._stage = j.stage;
+
+  patch($("#togglelog"), showLog ? "Hide Details" : "Show Details");
+  const pre = $("#joblog");
+  pre.classList.toggle("hidden", !showLog);
+  if (showLog) {
+    const text = lines.length ? lines.join("\n") : "starting…";
+    if (pre.textContent !== text) { const end = pre.scrollHeight - pre.scrollTop - pre.clientHeight < 30; pre.textContent = text; if (end) pre.scrollTop = pre.scrollHeight; }
+  }
+}
+sheetHost.addEventListener("click", e => {
+  const b = e.target.closest("button"), j = S && S.job;
+  if (e.target.id === "scrim" && j && !j.running) { dismiss(j.id); renderSheet(); return; }
+  if (!b) return;
+  if (b.id === "dismiss") { dismiss(j.id); renderSheet(); }
+  else if (b.id === "cancel") act(() => api("/api/job/cancel", {json:{}}));
+  else if (b.id === "togglelog") { showLog = !showLog; renderSheet(); const pre = $("#joblog"); if (showLog) pre.scrollTop = pre.scrollHeight; }
+});
+sheetHost.addEventListener("submit", e => {
+  e.preventDefault();
+  const v = $("#code").value.trim(); if (!v) return;
+  act(() => api("/api/job/input", {json:{text:v}}));
+});
+
+function settingsView() {
+  const c = S.config, apps = S.apps || [], canPair = S.mode === "builtin", devs = S.registered || [];
+  const known = new Set(devs.map(d => d.udid.toLowerCase()));
+  const visible = (S.devices || []).filter(d => !known.has(d.udid.toLowerCase()));
+  const replacing = pending && apps.find(a => a.bundle_id === pending.info.bundle_id);
+  const appIds = apps.reduce((n, a) => n + 1 + (+(a.info && a.info.extension_count) || 0), 0);
+  const trash = (kind, id, label) => `<button class="iconbtn ${confirmRemove === kind + id ? "armed" : ""}" data-remove="${esc(kind + id)}" aria-label="Remove ${esc(label)}">${confirmRemove === kind + id ? "Remove" : ic("trash-outline", 20)}</button>`;
+  return `
+  <div class="sect">
+    <div class="shead"><h3>Devices</h3></div>
+    <div class="list">
+      ${devs.map(d => { const [cls, label] = devState(d);
+        return `<div class="cell ind">${tile(d.live ? "var(--blue)" : "var(--gray)", devIcon(d))}<span class="k">${esc(d.name)}<span class="sub">${label}</span></span>${trash("dev:", d.udid, d.name)}</div>`; }).join("")}
+      ${visible.map(d => `<div class="cell ind">${tile("var(--gray)", devIcon({live:d, name:d.name}))}<span class="k">${esc(d.name)}<span class="sub">${d.reachable ? "Paired, not added" : "Locked"}</span></span>
+        <button class="cap solid" data-add="${esc(d.udid)}">Add</button></div>`).join("")}
+      ${!devs.length && !visible.length ? `<div class="cell"><span class="k" style="color:var(--label-2)">${S.scanning ? "Looking for devices…" : "No device found"}</span></div>` : ""}
+      <button class="cell action" id="scan" ${S.scanning ? "disabled" : ""}>${S.scanning ? "Scanning…" : "Scan Again"}</button>
+      ${canPair ? `<button class="cell action" id="pair">Pair New Device…</button>` : ""}
+    </div>
+    <div class="foot">${canPair ? "To pair, plug the device into this machine and tap Trust. After that it works over Wi‑Fi. " : ""}A new device gets all your apps; change that per app below.</div>
+  </div>
+
+  <div class="sect">
+    <div class="shead"><h3>Apps</h3></div>
+    <div class="list">
+      ${apps.map(a => { const on = new Set(a.targets.map(t => t.udid));
+        return `<div class="cell ind appcell">${appIcon(a, "xs")}<span class="k">${esc(a.name)}<span class="sub">${esc(a.version)}</span>
+          ${devs.length > 1 ? `<span class="chips">${devs.map(d => `<button class="chip ${on.has(d.udid) ? "on" : ""}" data-toggle="${esc(a.id)}" data-dev="${esc(d.udid)}">${on.has(d.udid) ? ic("checkmark", 12) : ""}${esc(d.name)}</button>`).join("")}</span>` : ""}</span>
+          ${trash("app:", a.id, a.name)}</div>`; }).join("")}
+      ${pending ? `<div class="cell ind">${appIcon(pending.info, "xs")}<span class="k">${esc(pending.info.name)}<span class="sub">${esc(pending.info.version)} · ${esc(pending.filename)}</span></span></div>
+        ${ipaWarnings(pending.info)}
+        <button class="cell action" id="useipa" style="font-weight:600">${replacing ? `Replace ${esc(replacing.name)}` : devs.length > 1 ? "Add to All Devices" : "Add App"}</button>
+        <button class="cell action" id="dropipa" style="color:var(--red)">Cancel</button>`
+      : `<div class="drop" id="drop">${ic("add-circle", 22)}<span class="k" id="progt">Add App…</span></div>
+         <div class="progress hidden" id="prog"><i></i></div>
+         <input type="file" id="file" accept=".ipa" class="hidden">`}
+    </div>
+    <div class="foot">A free Apple ID allows 3 apps per device and 10 App IDs a week${apps.length ? ` (these use ${appIds}; the same app on more devices costs nothing extra)` : ""}.</div>
+  </div>
+
+  <div class="sect">
+    <div class="shead"><h3>Apple ID</h3></div>
+    <form id="aidf" autocomplete="off"><div class="list">
+      <div class="cell"><label for="aid">Email</label><input class="fi" id="aid" type="email" value="${esc(c.apple_id)}" placeholder="name@example.com" required></div>
+      <div class="cell"><label for="apw">Password</label><input class="fi" id="apw" type="password" placeholder="${c.has_password ? "Saved" : "Required"}" autocomplete="new-password"></div>
+      <button class="cell action">Save</button>
+    </div></form>
+    <div class="foot">Use the regular password, not an app-specific one.</div>
+  </div>
+
+  <div class="sect">
+    <div class="shead"><h3>Re-signing</h3></div>
+    <div class="list">
+      <div class="cell ind">${tile("var(--green)", "flash")}<span class="k">Automatic</span>${sw("auto2", c.auto_check)}</div>
+      <div class="cell ind">${tile("var(--orange)", "time-outline")}<label for="rb" class="k">Re-sign Early</label>
+        <select class="fi" id="rb">${[1,2,3,4,5,6].map(d => `<option value="${d}" ${d === c.renew_before_days ? "selected" : ""}>${d} day${d > 1 ? "s" : ""}</option>`).join("")}</select>
+        <span class="chev">${ic("chevron-forward", 16)}</span></div>
+    </div>
+  </div>`;
+}
+function ipaWarnings(i) {
+  const row = (bad, t) => `<div class="cell warnrow ${bad ? "bad" : ""}">${ic(bad ? "alert-circle" : "warning", 20)}<span class="k">${t}</span></div>`;
+  let w = "";
+  if (i.encrypted === "yes") w += row(true, "This IPA is still encrypted and won't launch.");
+  if (+i.extension_count) w += row(false, `Uses ${1 + +i.extension_count} App IDs (${i.extension_count} extension${+i.extension_count > 1 ? "s" : ""}).`);
+  for (const d of S.registered || []) if (d.live && i.min_ios && parseInt(i.min_ios) > parseInt(d.live.ios)) w += row(false, `Needs iOS ${esc(i.min_ios)}; ${esc(d.name)} has ${esc(d.live.ios)}.`);
+  return w;
+}
+
+function activityView() {
+  return `<div class="sect">
+    <div class="shead"><h3>History</h3><button class="linkbtn" id="reload">${ic("refresh", 15)}Reload</button></div>
+    <div class="list"><pre class="logs" id="logs">Loading…</pre></div></div>`;
+}
+async function loadLogs() {
+  const r = await api("/api/logs");
+  const el = $("#logs"); if (!el) return;
+  el.textContent = r.lines.length ? r.lines.join("\n") : "Nothing yet.";
+  el.scrollTop = el.scrollHeight;
+}
+
+async function act(fn, ok) { try { await fn(); if (ok) toast(ok); } catch (e) { toast(e.message); } await poll(); }
+function startJob(path, body={}) { return act(async () => { const r = await api(path, {json: body}); if (r.job) watched.add(r.job); }); }
+
+function wire() {
+  const on = (id, ev, fn) => { const el = document.getElementById(id); if (el) el[ev] = fn; };
+  root.querySelectorAll("[data-view]").forEach(b => b.onclick = () => go(b.dataset.view));
+  root.querySelectorAll("[data-go]").forEach(b => b.onclick = () => go(b.dataset.go));
+  root.querySelectorAll("[data-sign]").forEach(b => b.onclick = () => startJob("/api/refresh", {force:true, app:b.dataset.sign, device:b.dataset.dev}));
+  root.querySelectorAll("[data-add]").forEach(b => b.onclick = () => act(() => api("/api/device/add", {json:{udid:b.dataset.add}}), "Device added"));
+  root.querySelectorAll("[data-toggle]").forEach(b => b.onclick = () => {
+    const a = S.apps.find(x => x.id === b.dataset.toggle), on = new Set(a.targets.map(t => t.udid));
+    on.has(b.dataset.dev) ? on.delete(b.dataset.dev) : on.add(b.dataset.dev);
+    act(() => api("/api/app/devices", {json:{app:a.id, devices:[...on]}}));
+  });
+  on("signall", "onclick", () => startJob("/api/refresh", {force:true}));
+  on("recheck", "onclick", () => startJob("/api/recheck"));
+  on("pair", "onclick", () => startJob("/api/pair"));
+  on("scan", "onclick", () => act(() => api("/api/devices/scan", {json:{}})));
+  on("reload", "onclick", loadLogs);
+  for (const id of ["auto", "auto2"]) on(id, "onchange", e => act(() => api("/api/settings", {json:{auto_check:e.target.checked}})));
+  on("rb", "onchange", e => act(() => api("/api/settings", {json:{renew_before_days:+e.target.value}}), "Saved"));
+  root.querySelectorAll("[data-remove]").forEach(b => b.onclick = () => {
+    const id = b.dataset.remove;
+    if (confirmRemove !== id) { confirmRemove = id; render(); setTimeout(() => { if (confirmRemove === id) { confirmRemove = null; render(); } }, 4000); return; }
+    confirmRemove = null;
+    const [kind, key] = [id.slice(0, 4), id.slice(4)];
+    act(() => kind === "dev:" ? api("/api/device/remove", {json:{device:key}}) : api("/api/app/remove", {json:{id:key}}), "Removed");
+  });
+  on("aidf", "onsubmit", e => { e.preventDefault(); act(async () => { await api("/api/appleid", {json:{apple_id:$("#aid").value, password:$("#apw").value}}); $("#apw").value = ""; }, "Saved"); });
+  on("useipa", "onclick", () => act(async () => { await api("/api/ipa/use", {json:{filename:pending.filename}}); pending = null; }, "App added"));
+  on("dropipa", "onclick", () => { pending = null; render(); });
+  const drop = $("#drop"), file = $("#file");
+  if (drop && file) {
+    drop.onclick = () => file.click();
+    file.onchange = () => file.files[0] && upload(file.files[0]);
+    drop.ondragover = e => { e.preventDefault(); drop.classList.add("over"); };
+    drop.ondragleave = () => drop.classList.remove("over");
+    drop.ondrop = e => { e.preventDefault(); drop.classList.remove("over"); const f = e.dataTransfer.files[0]; if (f) upload(f); };
+  }
+}
+function upload(f) {
+  if (!/\.ipa$/i.test(f.name)) return toast("That's not an .ipa file");
+  clearTimeout(pollT); pollGen++;
+  const prog = $("#prog"), bar = $("#prog i"), txt = $("#progt");
+  prog.classList.remove("hidden");
+  const x = new XMLHttpRequest();
+  x.open("PUT", "/api/ipa"); x.setRequestHeader("X-Requested-With", "sideloop");
+  x.upload.onprogress = e => { if (e.lengthComputable) { bar.style.width = (e.loaded/e.total*100) + "%"; txt.textContent = `Uploading… ${Math.round(e.loaded/e.total*100)}%`; } };
+  x.upload.onload = () => { txt.textContent = "Reading the app…"; };
+  x.onload = () => {
+    let r = {}; try { r = JSON.parse(x.responseText); } catch {}
+    if (x.status === 200) pending = {info: r.info, filename: f.name}; else toast(r.error || `Upload failed (${x.status})`);
+    render(); poll();
+  };
+  x.onerror = () => { toast("Upload failed"); render(); poll(); };
+  x.send(f);
+}
+boot().catch(e => { root.innerHTML = `<div class="auth"><div class="box"><h1>Can't Connect</h1><p>${esc(e.message)}</p></div></div>`; });
+</script>
+</body>
+</html>

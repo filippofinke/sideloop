@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5ac8fa"/>
+      <stop offset=".55" stop-color="#007aff"/>
+      <stop offset="1" stop-color="#5856d6"/>
+    </linearGradient>
+    <linearGradient id="gloss" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity=".22"/>
+      <stop offset=".5" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="115" fill="url(#bg)"/>
+  <rect width="512" height="512" rx="115" fill="url(#gloss)"/>
+  <g fill="none" stroke="#fff" stroke-width="30" stroke-linecap="round">
+    <path d="M370.3 190A132 132 0 0 0 128 225"/>
+    <path d="M141.7 322A132 132 0 0 0 384 287"/>
+  </g>
+  <g fill="#fff" stroke="#fff" stroke-width="10" stroke-linejoin="round">
+    <path d="M121 266L99 216L156 226Z"/>
+    <path d="M391 246L413 296L356 286Z"/>
+  </g>
+  <rect x="211" y="176" width="90" height="160" rx="22" fill="#fff"/>
+  <rect x="238" y="190" width="36" height="8" rx="4" fill="#007aff" opacity=".55"/>
+  <path d="M232 262l17 17 32-36" fill="none" stroke="#007aff" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

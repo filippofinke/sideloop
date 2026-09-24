@@ -1,0 +1,33 @@
+name: sideloop
+
+
+services:
+  anisette:
+    image: dadoum/anisette-v3-server:latest
+    container_name: sideloop-anisette
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6969:6969"
+    volumes:
+      - anisette_data:/home/Alcoholic/.config/anisette-v3
+
+  app:
+    build: .
+    image: sideloop
+    container_name: sideloop
+    restart: unless-stopped
+    depends_on: [anisette]
+    network_mode: host
+    privileged: true
+    environment:
+      MUX: builtin
+      ANISETTE_SERVER: http://127.0.0.1:6969
+      TZ: ${TZ:-UTC}
+    volumes:
+      - ./data:/data
+      - ./data/lockdown:/var/lib/lockdown
+      - /run/udev:/run/udev:ro
+      - /dev/bus/usb:/dev/bus/usb
+
+volumes:
+  anisette_data:

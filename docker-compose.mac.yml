@@ -1,0 +1,14 @@
+services:
+  app:
+    network_mode: !reset null
+    privileged: !reset false
+    ports:
+      - "127.0.0.1:8080:8080"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      MUX: external
+      USBMUXD_SOCKET_ADDRESS: host.docker.internal:27015
+      ANISETTE_SERVER: http://anisette:6969
+    volumes: !override
+      - ./data:/data
