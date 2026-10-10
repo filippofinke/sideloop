@@ -2,12 +2,14 @@ import hashlib
 import hmac
 import json
 import os
+import re
 import secrets
 import time
 
 from .config import UI_FILE
 
 SESSION_TTL = 30 * 86400
+TOKEN_RE = re.compile(r"[0-9a-f]{32}")
 
 
 def _load():
@@ -53,3 +55,14 @@ def valid_session(token):
         return False
     exp, sig = token.split(".", 1)
     return hmac.compare_digest(sig, _sign(c["secret"], exp)) and exp.isdigit() and int(exp) > time.time()
+
+
+def checkin_token(udid):
+    c = _load()
+    return _sign(c["secret"], f"checkin:{udid}")[:32] if c else ""
+
+
+def checkin_device(token, udids):
+    if not TOKEN_RE.fullmatch(token or ""):
+        return None
+    return next((u for u in udids if hmac.compare_digest(checkin_token(u), token)), None)

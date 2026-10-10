@@ -15,6 +15,7 @@ SCAN_INTERVAL = 60
 
 
 class Muxers:
+    # The netmuxd for devices away from home runs only during a run (see remote.tunnel_muxer).
     NAMES = ("usbmuxd", "netmuxd")
     CMDS = {
         "usbmuxd": ["usbmuxd", "-f"],
@@ -135,6 +136,10 @@ class Health:
         while True:
             self.scan()
             time.sleep(SCAN_INTERVAL)
+
+    def is_local(self, udid):
+        with self.lock:
+            return udid in self.here
 
     def visible(self, udid):
         with self.lock:

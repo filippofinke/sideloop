@@ -5,8 +5,8 @@ import time
 import urllib.parse
 from pathlib import Path
 
-from . import auth, config, ipa, pairing, store
-from .config import LIFETIME_DAYS, MUX, PENDING_IPA, STATE
+from . import auth, config, ipa, pairing, remote, store
+from .config import LIFETIME_DAYS, MUX, PENDING_IPA, STATE, WG_GATEWAY, WG_SUBNET
 from .jobs import redact, run_capture, run_pty
 from .watcher import configured
 
@@ -18,8 +18,8 @@ MAX_IPA = 4 * 1024 ** 3
 
 
 class App:
-    def __init__(self, jobs, health, muxers):
-        self.jobs, self.health, self.muxers = jobs, health, muxers
+    def __init__(self, jobs, health, muxers, watcher=None):
+        self.jobs, self.health, self.muxers, self.watcher = jobs, health, muxers, watcher
 
     def state(self):
         cfg = config.read()
@@ -34,8 +34,10 @@ class App:
                        "renew_before_days": config.renew_before_days(cfg), "lifetime_days": LIFETIME_DAYS,
                        "auto_check": cfg["AUTO_CHECK"] == "1"},
             "apps": [store.app_view(a) for a in store.app_ids()],
-            "registered": [{"udid": u, "name": store.device_name(u), "live": live.get(u.lower())}
+            "registered": [{"udid": u, "name": store.device_name(u), "live": live.get(u.lower()),
+                            "tunnel_ip": store.device_tunnel_ip(u), "checkin": auth.checkin_token(u)}
                            for u in store.device_ids()],
+            "tunnel_route": bool(WG_SUBNET and WG_GATEWAY),
             "devices": h["devices"],
             "scanning": h["scanning"],
             "services": {"anisette": h["anisette"], "muxer": h["muxer"]},
@@ -78,6 +80,17 @@ class App:
             raise ValueError("that device isn't visible right now")
         store.add_device(d["udid"], d["name"])
         self.health.scan()
+
+    def set_tunnel_ip(self, data):
+        if not self.muxers:
+            raise ValueError("reaching devices over WireGuard only works on Linux")
+        udid = self.device(data)
+        if not udid:
+            raise ValueError("which device?")
+        store.set_device_tunnel_ip(udid, remote.valid_ip(data.get("ip")))
+
+    def checkin(self, udid):
+        return self.watcher.checkin(udid) if self.watcher else "automatic refreshing isn't running"
 
     def remove_device(self, data):
         udid = self.device(data)
@@ -132,24 +145,32 @@ class App:
 
     def _target(self, data):
         app, udid = self.app(data), self.device(data)
-        args = (["--app", app["id"]] if app else []) + (["--device", udid] if udid else [])
+        args = ["--app", app["id"]] if app else []
+        udids = [udid] if udid else store.assigned_devices(app["id"] if app else None)
         what = (app["name"] if app else "all apps") + (f" on {store.device_name(udid)}" if udid else "")
-        return args, what
+        return args, udids, what
+
+    def _run_devices(self, job, udids, argv, runner):
+        if not udids:
+            job.say("nothing to do: no app is assigned to a device")
+            return
+        job.rc = remote.run_devices(job, udids, argv, runner, self.health.is_local)
 
     def refresh(self, data):
         if not configured():
             raise ValueError("finish setup first")
-        args, what = self._target(data)
+        args, udids, what = self._target(data)
         if data.get("force"):
             args, title = args + ["--force"], f"Signing {what}"
         else:
             title = "Checking if a refresh is due"
-        return {"job": self.jobs.start("refresh", title, lambda j: run_pty(j, ["refresh.sh", *args])).id}
+        argv = ["refresh.sh", *args]
+        return {"job": self.jobs.start("refresh", title, lambda j: self._run_devices(j, udids, argv, run_pty)).id}
 
     def recheck(self, data):
-        args, what = self._target(data)
-        argv = ["refresh.sh", "--recheck", *args]
-        return {"job": self.jobs.start("recheck", f"Checking {what}", lambda j: run_capture(j, argv)).id}
+        args, udids, what = self._target(data)
+        argv, runner = ["refresh.sh", "--recheck", *args], lambda j, a, env: run_capture(j, a, env=env)
+        return {"job": self.jobs.start("recheck", f"Checking {what}", lambda j: self._run_devices(j, udids, argv, runner)).id}
 
     def pair(self, data):
         if not self.muxers:
@@ -172,6 +193,7 @@ class App:
             "/api/devices/scan": self.scan,
             "/api/device/add": self.add_device,
             "/api/device/remove": self.remove_device,
+            "/api/device/tunnel": self.set_tunnel_ip,
             "/api/app/devices": self.set_app_devices,
             "/api/app/remove": self.remove_app,
             "/api/ipa/use": self.use_ipa,
@@ -237,6 +259,13 @@ def handler(app):
                 return self.send(200, {"ok": True})
             if path == "/api/auth":
                 return self.send(200, {"has_password": auth.has_password(), "logged_in": self.authed()})
+            if path.startswith("/api/checkin/"):
+                # Opened by an iOS Shortcut through the tunnel, so the per-device token stands in for a session.
+                udid = auth.checkin_device(path[len("/api/checkin/"):], store.device_ids())
+                if not udid:
+                    time.sleep(1)
+                    return self.error(404, "unknown check-in link")
+                return self.send(200, {"ok": True, "message": app.checkin(udid)})
             if not self.authed():
                 return self.error(401, "sign in first")
             if path == "/api/state":

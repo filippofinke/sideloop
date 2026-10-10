@@ -17,12 +17,13 @@ def _sh(*argv):
 
 def _wait_for_usb(job):
     deadline = time.time() + USB_TIMEOUT
-    while not job.cancelled and time.time() < deadline:
-        out = _sh("idevice_id", "-l")[1].split()
-        if out:
-            return out[0]
+    while True:
+        rc, out = _sh("idevice_id", "-l")
+        if rc == 0 and out.split():
+            return out.split()[0]
+        if job.cancelled or time.time() > deadline:
+            raise RuntimeError("no device showed up on USB" + (f" ({out})" if rc else ""))
         time.sleep(2)
-    raise RuntimeError("no device showed up on USB")
 
 
 def _pair(job, udid):

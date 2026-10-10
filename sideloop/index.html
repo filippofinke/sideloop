@@ -471,6 +471,16 @@ function settingsView() {
     </div>
     <div class="foot">${canPair ? "To pair, plug the device into this machine and tap Trust. After that it works over Wi‑Fi. " : ""}A new device gets all your apps; change that per app below.</div>
   </div>
+${canPair && devs.length ? `
+  <div class="sect">
+    <div class="shead"><h3>Away From Home</h3></div>
+    <div class="list">
+      ${devs.map(d => `<div class="cell"><label for="tun-${esc(d.udid)}">${esc(d.name)}</label>
+        <input class="fi" id="tun-${esc(d.udid)}" data-tunnel="${esc(d.udid)}" value="${esc(d.tunnel_ip)}" placeholder="WireGuard IP" autocomplete="off" autocapitalize="off" spellcheck="false">
+        ${d.tunnel_ip ? `<button class="cap" data-copy="${esc(d.checkin)}">Copy Link</button>` : ""}</div>`).join("")}
+    </div>
+    <div class="foot">Enter the IP each device has in WireGuard, like 10.8.0.2. While a signature is due and the device isn't on this network, it's reached there instead, as long as it's on some Wi‑Fi network. Open its link from a Shortcuts automation to start a due refresh right away; the link uses this page's address, which the device has to reach through WireGuard.${S.tunnel_route ? "" : " WG_SUBNET and WG_GATEWAY aren't set, so this machine needs its own route to the WireGuard subnet."}</div>
+  </div>` : ""}
 
   <div class="sect">
     <div class="shead"><h3>Apps</h3></div>
@@ -531,6 +541,16 @@ async function loadLogs() {
   el.scrollTop = el.scrollHeight;
 }
 
+async function copyLink(token) {
+  const link = `${location.origin}/api/checkin/${token}`;
+  try { await navigator.clipboard.writeText(link); }
+  catch {
+    const t = document.createElement("textarea"); t.value = link; document.body.append(t); t.select();
+    const ok = document.execCommand("copy"); t.remove();
+    if (!ok) return prompt("Copy this link:", link);
+  }
+  toast("Link copied");
+}
 async function act(fn, ok) { try { await fn(); if (ok) toast(ok); } catch (e) { toast(e.message); } await poll(); }
 function startJob(path, body={}) { return act(async () => { const r = await api(path, {json: body}); if (r.job) watched.add(r.job); }); }
 
@@ -540,6 +560,8 @@ function wire() {
   root.querySelectorAll("[data-go]").forEach(b => b.onclick = () => go(b.dataset.go));
   root.querySelectorAll("[data-sign]").forEach(b => b.onclick = () => startJob("/api/refresh", {force:true, app:b.dataset.sign, device:b.dataset.dev}));
   root.querySelectorAll("[data-add]").forEach(b => b.onclick = () => act(() => api("/api/device/add", {json:{udid:b.dataset.add}}), "Device added"));
+  root.querySelectorAll("[data-tunnel]").forEach(i => i.onchange = () => act(() => api("/api/device/tunnel", {json:{device:i.dataset.tunnel, ip:i.value}}), i.value.trim() ? "Saved" : "Cleared"));
+  root.querySelectorAll("[data-copy]").forEach(b => b.onclick = () => copyLink(b.dataset.copy));
   root.querySelectorAll("[data-toggle]").forEach(b => b.onclick = () => {
     const a = S.apps.find(x => x.id === b.dataset.toggle), on = new Set(a.targets.map(t => t.udid));
     on.has(b.dataset.dev) ? on.delete(b.dataset.dev) : on.add(b.dataset.dev);

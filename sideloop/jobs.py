@@ -160,10 +160,12 @@ class Jobs:
             return self.auto
 
 
-def run_pty(job, argv):
+def run_pty(job, argv, env=None):
     pid, fd = pty.fork()
     if pid == 0:
         try:
+            if env:
+                os.execvpe(argv[0], argv, env)
             os.execvp(argv[0], argv)
         finally:
             os._exit(127)
@@ -191,11 +193,12 @@ def run_pty(job, argv):
     job.rc = os.waitstatus_to_exitcode(status)
     if job.partial.strip():
         job.say("")
+    return job.rc
 
 
-def run_capture(job, argv, timeout=None):
+def run_capture(job, argv, timeout=None, env=None):
     p = subprocess.Popen(argv, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                         start_new_session=True)
+                         start_new_session=True, env=env)
     job.pid = p.pid
     deadline = time.time() + timeout if timeout else None
     for chunk in iter(lambda: p.stdout.read1(4096), b""):
@@ -205,3 +208,4 @@ def run_capture(job, argv, timeout=None):
             job.say("✗ timed out")
             break
     job.rc = p.wait()
+    return job.rc

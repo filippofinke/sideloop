@@ -23,6 +23,9 @@ services:
       MUX: builtin
       ANISETTE_SERVER: http://127.0.0.1:6969
       TZ: ${TZ:-UTC}
+      # Reach devices away from home through a WireGuard server (see README):
+      # WG_SUBNET: 10.8.0.0/24
+      # WG_GATEWAY: 172.18.0.2
     volumes:
       - ./data:/data
       - ./data/lockdown:/var/lib/lockdown

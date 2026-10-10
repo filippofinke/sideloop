@@ -21,7 +21,7 @@ ARG NETMUXD_TAG=v0.4.3
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
-      libimobiledevice-utils usbmuxd openssl python3 curl ca-certificates coreutils tzdata \
+      libimobiledevice-utils usbmuxd openssl python3 curl ca-certificates coreutils tzdata iproute2 \
  && rm -rf /var/lib/apt/lists/*
 
 RUN arch="$(uname -m)" \

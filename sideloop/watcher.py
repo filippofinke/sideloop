@@ -1,7 +1,7 @@
 import threading
 import time
 
-from . import config, store
+from . import config, remote, store
 from .config import APPS
 from .jobs import run_capture
 from .log import log
@@ -25,26 +25,42 @@ class Watcher:
         self.queue = set()
         self.lock = threading.Lock()
 
-    def due(self):
+    def due(self, device=None):
         window = config.renew_before_days() * 86400
         for app_id in store.app_ids():
             for udid in store.app_devices(app_id):
+                if device and udid != device:
+                    continue
                 expiry = store.read_state(APPS / app_id / "state" / udid)["expiry"]
-                if not expiry or expiry - time.time() <= window:
+                # Same rule as refresh.sh: due once the whole days left are at most RENEW_BEFORE_DAYS.
+                if not expiry or expiry - time.time() < window + 86400:
                     return True
         return False
 
     def schedule(self):
         self.next_run = time.time() + (DUE_INTERVAL if self.due() else IDLE_INTERVAL)
 
-    def poke(self, udid):
+    def poke(self, udid, why="came online"):
         now = time.time()
         with self.lock:
             if now - self.last_poke.get(udid, 0) < ARRIVAL_DEBOUNCE:
-                return
+                return False
             self.last_poke[udid] = now
             self.queue.add(udid)
-        log(f"watcher: {store.device_name(udid)} came online")
+        log(f"watcher: {store.device_name(udid)} {why}")
+        return True
+
+    def checkin(self, udid):
+        if config.read()["AUTO_CHECK"] != "1":
+            return "automatic refreshing is turned off"
+        if not self.due(udid):
+            return "nothing is due"
+        if not self.poke(udid, "checked in"):
+            return "already checked in a moment ago"
+        return "a refresh is due; starting it"
+
+    def targets(self, timer, queued):
+        return [u for u in (store.device_ids() if timer else queued) if self.due(u)]
 
     def loop(self):
         while True:
@@ -66,8 +82,9 @@ class Watcher:
             with self.lock:
                 self.queue.clear()
             try:
-                for udid in [None] if timer else queued:
-                    run_capture(job, ["refresh.sh"] + (["--device", udid] if udid else []), RUN_TIMEOUT)
+                job.rc = remote.run_devices(job, self.targets(timer, queued), ["refresh.sh"],
+                                            lambda j, argv, env: run_capture(j, argv, RUN_TIMEOUT, env),
+                                            self.health.is_local)
             finally:
                 job.ended = time.time()
                 if job.lines:

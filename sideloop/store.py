@@ -7,7 +7,7 @@ from . import ipa
 from .config import APPS, DEVICES, read_env, write_env
 
 APP_KEYS = ["BUNDLE_ID", "APP_NAME", "APP_VERSION", "IPA_SOURCE", "ADDED", "DEVICES"]
-DEVICE_KEYS = ["DEVICE_NAME", "ADDED"]
+DEVICE_KEYS = ["DEVICE_NAME", "ADDED", "TUNNEL_IP"]
 UDID_RE = re.compile(r"^[0-9A-Fa-f-]{20,64}$")
 
 
@@ -41,12 +41,22 @@ def add_device(udid, name):
         raise ValueError("that doesn't look like a device ID")
     new = udid not in device_ids()
     old = read_env(DEVICES / f"{udid}.env", DEVICE_KEYS)
-    write_env(DEVICES / f"{udid}.env", {"DEVICE_NAME": name or udid, "ADDED": old["ADDED"] or int(time.time())})
+    write_env(DEVICES / f"{udid}.env", dict(old, DEVICE_NAME=name or udid, ADDED=old["ADDED"] or int(time.time())))
     if new:
         for app_id in app_ids():
             devs = app_devices(app_id)
             if udid not in devs:
                 set_app_devices(app_id, devs + [udid])
+
+
+def device_tunnel_ip(udid):
+    return read_env(DEVICES / f"{udid}.env", DEVICE_KEYS)["TUNNEL_IP"]
+
+
+def set_device_tunnel_ip(udid, ip):
+    values = read_env(DEVICES / f"{udid}.env", DEVICE_KEYS)
+    values["TUNNEL_IP"] = ip
+    write_env(DEVICES / f"{udid}.env", values)
 
 
 def remove_device(udid):
@@ -69,6 +79,11 @@ def app_meta(app_id):
 def app_devices(app_id, meta=None):
     known = {u.lower(): u for u in device_ids()}
     return [known[u.lower()] for u in (meta or app_meta(app_id))["DEVICES"].split() if u.lower() in known]
+
+
+def assigned_devices(app_id=None):
+    wanted = {u for a in ([app_id] if app_id else app_ids()) for u in app_devices(a)}
+    return [u for u in device_ids() if u in wanted]
 
 
 def set_app_devices(app_id, udids):

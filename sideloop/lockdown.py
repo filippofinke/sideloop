@@ -10,7 +10,7 @@ WIFI_DOMAIN = "com.apple.mobile.wireless_lockdown"
 WIFI_KEY = "EnableWiFiConnections"
 
 
-def _mux_connect(addr):
+def mux_connect(addr):
     if ":" in addr:
         host, port = addr.rsplit(":", 1)
         return socket.create_connection((host, int(port)), timeout=15)
@@ -30,25 +30,29 @@ def _recv_exact(s, n):
     return buf
 
 
-def _mux_request(s, msg, tag=1):
+def mux_send(s, msg, tag=1):
     body = plistlib.dumps(dict(msg, ClientVersionString="sideloop", ProgName="sideloop"))
     s.sendall(struct.pack("<IIII", 16 + len(body), 1, 8, tag) + body)
+
+
+def mux_request(s, msg, tag=1):
+    mux_send(s, msg, tag)
     length = struct.unpack("<I", _recv_exact(s, 4))[0]
     _recv_exact(s, 12)
     return plistlib.loads(_recv_exact(s, length - 16))
 
 
 def _device_id(udid, mux):
-    with _mux_connect(mux) as s:
-        for d in _mux_request(s, {"MessageType": "ListDevices"}).get("DeviceList", []):
+    with mux_connect(mux) as s:
+        for d in mux_request(s, {"MessageType": "ListDevices"}).get("DeviceList", []):
             if d["Properties"].get("SerialNumber", "").lower() == udid.lower():
                 return d["DeviceID"]
     raise LookupError(f"device {udid} not visible to the muxer")
 
 
 def _pair_record(udid, mux):
-    with _mux_connect(mux) as s:
-        r = _mux_request(s, {"MessageType": "ReadPairRecord", "PairRecordID": udid})
+    with mux_connect(mux) as s:
+        r = mux_request(s, {"MessageType": "ReadPairRecord", "PairRecordID": udid})
     if "PairRecordData" not in r:
         raise LookupError("no pairing record: pair the device first")
     return plistlib.loads(r["PairRecordData"])
@@ -57,9 +61,9 @@ def _pair_record(udid, mux):
 class Lockdown:
     def __init__(self, udid, mux):
         self.pair = _pair_record(udid, mux)
-        s = _mux_connect(mux)
+        s = mux_connect(mux)
         port = struct.unpack(">H", struct.pack("<H", LOCKDOWN_PORT))[0]
-        r = _mux_request(s, {"MessageType": "Connect", "DeviceID": _device_id(udid, mux), "PortNumber": port})
+        r = mux_request(s, {"MessageType": "Connect", "DeviceID": _device_id(udid, mux), "PortNumber": port})
         if r.get("Number", 1) != 0:
             s.close()
             raise ConnectionError(f"muxer refused the lockdown connection ({r.get('Number')})")

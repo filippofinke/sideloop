@@ -16,7 +16,10 @@ MUX = os.environ.get("MUX", "builtin")
 PORT = int(os.environ.get("UI_PORT", "8080"))
 ANISETTE = os.environ.get("ANISETTE_SERVER", "http://127.0.0.1:6969")
 USB_MUX = "/var/run/usbmuxd"
+TUNNEL_MUX = "127.0.0.1:27016"
 LOCKDOWN_DIR = "/var/lib/lockdown"
+WG_SUBNET = os.environ.get("WG_SUBNET", "").strip()
+WG_GATEWAY = os.environ.get("WG_GATEWAY", "").strip()
 LIFETIME_DAYS = 7
 
 KEYS = ["APPLE_ID", "APPLE_PASSWORD", "RENEW_BEFORE_DAYS", "AUTO_CHECK"]
