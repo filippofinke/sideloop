@@ -1,0 +1,32 @@
+diff --git a/upstream_repo/AltServer/DeviceManager.cpp b/upstream_repo/AltServer/DeviceManager.cpp
+index fa687d7..b7ad9b6 100755
+--- a/upstream_repo/AltServer/DeviceManager.cpp
++++ b/upstream_repo/AltServer/DeviceManager.cpp
+@@ -549,7 +549,12 @@ void DeviceManager::WriteFile(afc_client_t client, std::string filepath, std::st
+     }
+     
+     uint64_t af = 0;
+-    if ((afc_file_open(client, destinationPath.c_str(), AFC_FOPEN_WRONLY, &af) != AFC_E_SUCCESS) || af == 0)
++    afc_error_t openError = afc_file_open(client, destinationPath.c_str(), AFC_FOPEN_WRONLY, &af);
++    if (openError != AFC_E_SUCCESS)
++    {
++        odslog("AFC open failed: error " << (int)openError << ", file " << filepath);
++    }
++    if (openError != AFC_E_SUCCESS || af == 0)
+     {
+         throw ServerError(ServerErrorCode::DeviceWriteFailed);
+     }
+@@ -564,7 +569,12 @@ void DeviceManager::WriteFile(afc_client_t client, std::string filepath, std::st
+         {
+             uint32_t count = 0;
+             
+-            if (afc_file_write(client, af, buffer.data() + bytesWritten, length - bytesWritten, &count) != AFC_E_SUCCESS || count == 0)
++            afc_error_t writeError = afc_file_write(client, af, buffer.data() + bytesWritten, length - bytesWritten, &count);
++            if (writeError != AFC_E_SUCCESS || count == 0)
++            {
++                odslog("AFC write failed: error " << (int)writeError << ", count " << count << ", after " << bytesWritten << " of " << length << " bytes of chunk, file " << filepath);
++            }
++            if (writeError != AFC_E_SUCCESS || count == 0)
+             {
+                 afc_file_close(client, af);
+                 throw ServerError(ServerErrorCode::DeviceWriteFailed);
