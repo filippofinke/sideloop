@@ -17,7 +17,10 @@ SECRET = re.compile(r"^(Data|Value) ?: |^X-(Apple|Mme|MMe)-|^(MachineID|One-Time
                     r"Device Description|Date|Sanitized client info) ?:|^Byte:|^(HMAC_OUT|NP):|anisette|"
                     r"^Received (auth )?response|^Signing: ")
 PROGRESS = re.compile(r"^(Signing|Installation) Progress:\s*([0-9.eE+-]+)")
-NOISE = re.compile(r"^Writing File: ")
+NOISE = re.compile(r"^Writing File: |^Press any key to continue")
+# AltServer waits for a key after every alert. In a web UI job nobody can press one, so the job would
+# hang until cancelled.
+ANY_KEY = "Press any key to continue"
 APP_START = re.compile(r"\[(.+?)\] (?:signing and installing|no signature on record|signature has)")
 MAX_LINE = 400
 
@@ -47,6 +50,11 @@ class Job:
 
     def add(self, text):
         text = ANSI.sub("", text)
+        if ANY_KEY in text and self.fd is not None:
+            try:
+                os.write(self.fd, b"\n")
+            except OSError:
+                pass
         if self.secret:
             text = text.replace(self.secret, MASK)
         with self.lock:
