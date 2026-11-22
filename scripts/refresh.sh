@@ -66,6 +66,11 @@ export ALTSERVER_ANISETTE_SERVER="$ANISETTE_SERVER"
 # back "Untrusted Developer". The patched AltServer leaves them in place, and prune_profiles below
 # removes the outdated ones afterwards, never the newest.
 export ALTSERVER_KEEP_PROFILES=1
+# Repeated refused sign-ins can get the Apple ID locked, so automatic runs stop after a few of them.
+# A manual run from the web UI uses --force, still signs in, and clears the count when it succeeds.
+SIGNIN_FAILS="$STATE_DIR/signin_failures"
+MAX_SIGNIN_FAILS=3
+SIGNIN_ERROR='Error: com\.rileytestut\.(ALTAppleAPI \(|AltServer\.Localized \(-[0-9]{4,})'
 export HOME="$DATA_DIR/.altserver"
 mkdir -p "$STATE_DIR" "$APP_STATE" "$HOME"
 # AltServer caches its signing certificate in ./AltServerData. Without that cache it revokes the
@@ -233,10 +238,12 @@ stamp_success() {
   p="$(probe_expiry $(( RUN_START - 300 )))" || return 1
   save_probe "$p"
   echo 0 > "$FAILS"
+  rm -f "$SIGNIN_FAILS"
 }
 
 days_left() { [[ -r "$EXPIRY" ]] && echo $(( ( $(cat "$EXPIRY") - $(now) ) / 86400 )) || echo -999; }
 read_fails() { local n=0; [[ -r "$FAILS" ]] && n="$(tr -cd '0-9' < "$FAILS")"; echo "${n:-0}"; }
+read_signin_fails() { local n=0; [[ -r "$SIGNIN_FAILS" ]] && n="$(tr -cd '0-9' < "$SIGNIN_FAILS")"; echo "${n:-0}"; }
 
 if (( RECHECK )); then
   device_online || { echo "${TAG}${DEVICE_NAME} not reachable; unlock it and try again"; exit 1; }
@@ -263,6 +270,12 @@ fi
 
 [[ -r "$IPA_PATH" ]] || { log "ERROR IPA missing: $IPA_PATH"; record fail "IPA missing"; exit 1; }
 
+if (( FORCE == 0 && $(read_signin_fails) >= MAX_SIGNIN_FAILS )); then
+  log "Apple refused the last $(read_signin_fails) sign-ins; automatic runs are paused to protect the account, sign from the web UI"
+  record fail "automatic runs paused after refused sign-ins; sign from the web UI"
+  exit 0
+fi
+
 log "signing and installing $(basename "$IPA_PATH") on $DEVICE_UDID"
 out="$(mktemp)"
 trap 'rm -f "$STATE_DIR/.running" "$out"' EXIT
@@ -287,7 +300,11 @@ if (( rc == 0 )) && stamp_success; then
 fi
 
 hint=""
-if (( rc == 0 )); then
+if grep -qE "$SIGNIN_ERROR" "$out"; then
+  (( rc )) || rc=1
+  hint="Apple refused the sign-in"
+  echo $(( $(read_signin_fails) + 1 )) > "$SIGNIN_FAILS"
+elif (( rc == 0 )); then
   rc=1
   hint="AltServer finished, but the app isn't on the device (did it lock or leave Wi-Fi mid-copy?)"
 elif grep -qiE 'two.?factor code|verification code' "$out"; then
