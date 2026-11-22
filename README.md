@@ -15,7 +15,7 @@ A small self-hosted service with a web UI for any Linux machine (amd64 or arm64)
 - [x] Automatic re-signing when a device comes online, before the signature expires
 - [x] Web UI for pairing, uploading IPAs, 2FA codes and live progress
 - [x] Checks each IPA for FairPlay encryption, tweaks and app extensions
-- [x] Self-hosted Apple sign-in via [anisette-v3-server](https://github.com/Dadoum/anisette-v3-server)
+- [x] Apple sign-in with Mac anisette data, stopping automatic retries before Apple locks the account
 - [x] Python standard library only, one Docker image for amd64 and arm64
 
 ## Demo
@@ -46,6 +46,8 @@ cp .env.example .env
 docker compose up -d
 ```
 
+When updating from a version that ran its own anisette container, use `docker compose up -d --build --remove-orphans` to remove it.
+
 The first build compiles AltServer, which takes a few minutes. On a small board like a Raspberry Pi 3 it is much faster to build on another arm64 machine and copy the image over:
 
 ```bash
@@ -75,6 +77,8 @@ Pair the device in Finder and enable **Show this iPhone when on Wi-Fi**.
 - A free account allows 3 apps per device and 10 App IDs per week. Each app extension needs its own App ID.
 - Trust the developer once in **Settings > General > VPN & Device Management**. Refreshes keep it trusted.
 - If Apple sign-in stops working, update `ALTSERVER_TAG` in the `Dockerfile`. AltServer is built from that tag with the patches in `altserver/`.
+- Apple sign-in needs anisette data from a Mac identity. By default it comes from SideStore's public server, `https://new.ani.sidestore.io`, which never receives your Apple ID or password. Set `ANISETTE_SERVER` in `.env` to use another one.
+- After 3 sign-ins refused by Apple, automatic re-signing pauses so the Apple ID doesn't get locked. Pressing **Sign** in the web UI tries again and resumes it once it works.
 
 Data is stored in `./data`.
 

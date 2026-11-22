@@ -12,7 +12,7 @@ ALTSERVER_BIN="${ALTSERVER_BIN:-/usr/local/bin/AltServer}"
 set -a; . "$CONFIG"; set +a
 : "${APPLE_ID:?}" "${APPLE_PASSWORD:?}"
 : "${RENEW_BEFORE_DAYS:=2}"
-: "${ANISETTE_SERVER:=http://127.0.0.1:6969}"
+: "${ANISETTE_SERVER:=https://new.ani.sidestore.io}"
 
 FORCE=0; RECHECK=0; APP=""; DEVICE=""
 while (( $# )); do

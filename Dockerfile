@@ -1,4 +1,4 @@
-ARG ALTSERVER_TAG=ng-2026-09-13
+ARG ALTSERVER_TAG=ng-2026-11-05
 
 # AltServer is built from source with the patches in altserver/. Stock AltServer removes every
 # free provisioning profile on the device before installing, which makes iOS forget that the user
@@ -34,7 +34,10 @@ COPY --from=altserver /AltServer /usr/local/bin/AltServer
 COPY scripts/ /usr/local/bin/
 COPY sideloop/ /opt/sideloop/
 
+# XDG_CONFIG_HOME keeps AltServer's anisette identity in /data, so updating the image doesn't ask
+# for a new 2FA code.
 ENV DATA_DIR=/data \
+    XDG_CONFIG_HOME=/data/.config \
     PYTHONPATH=/opt \
     PYTHONUNBUFFERED=1
 WORKDIR /data

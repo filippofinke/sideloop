@@ -14,7 +14,7 @@ PENDING_IPA = DATA / ".pending.ipa"
 
 MUX = os.environ.get("MUX", "builtin")
 PORT = int(os.environ.get("UI_PORT", "8080"))
-ANISETTE = os.environ.get("ANISETTE_SERVER", "http://127.0.0.1:6969")
+ANISETTE = os.environ.get("ANISETTE_SERVER", "https://new.ani.sidestore.io")
 USB_MUX = "/var/run/usbmuxd"
 LOCKDOWN_DIR = "/var/lib/lockdown"
 LIFETIME_DAYS = 7

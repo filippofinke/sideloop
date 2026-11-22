@@ -317,7 +317,7 @@ function appsView() {
   const window = c.renew_before_days * 86400, life = c.lifetime_days * 86400;
   const onDev = d => apps.map(a => ({a, t: a.targets.find(t => t.udid === d.udid)})).filter(x => x.t);
   const issues = [];
-  if (!S.services.anisette || !S.services.muxer) issues.push(["bad", `${!S.services.anisette ? "The Apple sign-in helper" : "The device connection service"} isn't running.`]);
+  if (!S.services.anisette || !S.services.muxer) issues.push(["bad", !S.services.anisette ? "The Apple sign-in server can't be reached." : "The device connection service isn't running."]);
   if (!c.auto_check) issues.push(["", "Automatic re-signing is off."]);
   else for (const d of devs) {
     const due = onDev(d).some(({t}) => !t.signature.expiry || t.signature.expiry - S.now <= window);

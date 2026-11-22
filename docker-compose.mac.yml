@@ -9,6 +9,5 @@ services:
     environment:
       MUX: external
       USBMUXD_SOCKET_ADDRESS: host.docker.internal:27015
-      ANISETTE_SERVER: http://anisette:6969
     volumes: !override
       - ./data:/data
